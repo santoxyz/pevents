@@ -1,11 +1,11 @@
-file(GLOB SRC "*.h" "*.cpp")
-set(INCL_DIRS . )
+# For more information about using CMake with Android Studio, read the
+# documentation: https://d.android.com/studio/projects/add-native-code.html
 
-# Create a library which includes the source files.
-# The extension is already found. Any number of sources could be listed here.
-add_library (pevents STATIC ${SRC})
+# Sets the minimum version of CMake required to build the native library.
+cmake_minimum_required(VERSION 3.4.1)
 
-# Make sure the compiler can find include files for our library
-# when other libraries or executables link to it
-target_include_directories (pevents PRIVATE ${INCL_DIRS})
-target_compile_definitions(pevents PRIVATE WFMO)
+project (pevents)
+set(CMAKE_CXX_FLAGS "-fpermissive -ggdb")
+
+add_definitions(-DWFMO -DLINUX)
+add_subdirectory (src)
