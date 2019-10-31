@@ -15,6 +15,8 @@
 #ifdef WFMO
 #include <algorithm>
 #include <deque>
+#include <unistd.h>
+
 #endif
 
 namespace neosmart {
@@ -165,10 +167,19 @@ namespace neosmart {
                 return WAIT_TIMEOUT;
             }
         } else {
-            tempResult = pthread_mutex_lock(&event->Mutex);
+            int retry = 10;
+            tempResult = EBUSY;
+            while (tempResult !=0 && retry >0) {
+                //SANTOX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
+                tempResult = pthread_mutex_trylock(&event->Mutex);
+                if (tempResult != 0){
+                    retry--;
+                    usleep(10000);
+                }
+            }
         }
 
-        assert(tempResult == 0);
+        //assert(tempResult == 0);
 
         int result = UnlockedWaitForEvent(event, milliseconds);
 
