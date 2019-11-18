@@ -19,6 +19,8 @@
 
 #endif
 
+#include "logger.h"
+
 namespace neosmart {
 #ifdef WFMO
     // Each call to WaitForMultipleObjects initializes a neosmart_wfmo_t object which tracks
@@ -161,13 +163,13 @@ namespace neosmart {
 
     int WaitForEvent(neosmart_event_t event, uint64_t milliseconds) {
         int tempResult;
+        int retry = 10;
         if (milliseconds == 0) {
             tempResult = pthread_mutex_trylock(&event->Mutex);
             if (tempResult == EBUSY) {
                 return WAIT_TIMEOUT;
             }
         } else {
-            int retry = 10;
             tempResult = EBUSY;
             while (tempResult !=0 && retry >0) {
                 //SANTOX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
@@ -179,7 +181,11 @@ namespace neosmart {
             }
         }
 
-        //assert(tempResult == 0);
+        if(retry>0) {
+            assert(tempResult == 0);
+        } else{
+            Logger:w("WaitForEvent: unable to LOCK mutex!");
+        }
 
         int result = UnlockedWaitForEvent(event, milliseconds);
 
@@ -471,13 +477,37 @@ namespace neosmart {
     }
 
     int ResetEvent(neosmart_event_t event) {
-        int result = pthread_mutex_lock(&event->Mutex);
-        assert(result == 0);
+
+
+        int retry = 10;
+        int tempResult = EBUSY;
+        while (tempResult !=0 && retry >0) {
+            //SANTOX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
+            tempResult = pthread_mutex_trylock(&event->Mutex);
+            if (tempResult != 0){
+                retry--;
+                usleep(10000);
+            }
+        }
+
+        if(retry>0) {
+            assert(tempResult == 0);
+        } else{
+            Logger:w("ResetEvent: unable to LOCK mutex!");
+        }
+
+
+       // int result = pthread_mutex_lock(&event->Mutex);
+       // assert(result == 0);
 
         event->State = false;
 
-        result = pthread_mutex_unlock(&event->Mutex);
-        assert(result == 0);
+        int result = pthread_mutex_unlock(&event->Mutex);
+        if(retry>0) {
+            assert(result == 0);
+        } else{
+            Logger:w("ResetEvent: unable to LOCK mutex!");
+        }
 
         return 0;
     }
