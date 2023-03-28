@@ -172,7 +172,7 @@ namespace neosmart {
         } else {
             tempResult = EBUSY;
             while (tempResult !=0 && retry >0) {
-                //SANTOX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
+                //SNTX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
                 tempResult = pthread_mutex_trylock(&event->Mutex);
                 if (tempResult != 0){
                     retry--;
@@ -184,7 +184,7 @@ namespace neosmart {
         if(retry>0) {
             assert(tempResult == 0);
         } else{
-            Logger::w("WaitForEvent: unable to LOCK mutex!");
+            Logger::w("SNTX WaitForEvent: unable to LOCK mutex!");
         }
 
         int result = UnlockedWaitForEvent(event, milliseconds);
@@ -482,7 +482,7 @@ namespace neosmart {
         int retry = 10;
         int tempResult = EBUSY;
         while (tempResult !=0 && retry >0) {
-            //SANTOX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
+            //SNTX: se uso pthread_mutex_lock(&event->Mutex) rimane bloccato ad libitum in armv8a!
             tempResult = pthread_mutex_trylock(&event->Mutex);
             if (tempResult != 0){
                 retry--;
@@ -493,7 +493,7 @@ namespace neosmart {
         if(retry>0) {
             assert(tempResult == 0);
         } else{
-            Logger::w("ResetEvent: unable to LOCK mutex!");
+            Logger::w("SNTX ResetEvent: unable to LOCK mutex!");
         }
 
 
