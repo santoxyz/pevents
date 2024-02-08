@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <deque>
 #endif
+#include "logger.h"
 
 namespace neosmart
 {
@@ -57,6 +58,10 @@ namespace neosmart
 	//The basic event structure, passed to the caller as an opaque pointer when creating events
 	struct neosmart_event_t_
 	{
+		int objectType;  // Type identifier
+		// Constructor to initialize objectType
+		neosmart_event_t_() : objectType(0xdeadbeef) {}
+        virtual ~neosmart_event_t_() {}  // Add a virtual destructor for polymorphism
 		pthread_cond_t CVariable;
 		pthread_mutex_t Mutex;
 		bool AutoReset;
@@ -101,6 +106,16 @@ namespace neosmart
 	}
 #endif
 
+	bool checkType(neosmart_event_t event) {
+		if (event && event->objectType == 0xdeadbeef){
+			//Logger::d("regular neosmart_event_t!");
+			return true;
+		}
+
+		Logger::e("not a neosmart_event_t!");
+		return false;
+	}
+
 	neosmart_event_t CreateEvent(bool manualReset, bool initialState)
 	{
 		neosmart_event_t event = new neosmart_event_t_;
@@ -125,7 +140,9 @@ namespace neosmart
 
 	int UnlockedWaitForEvent(neosmart_event_t event, uint64_t milliseconds)
 	{
+
 		int result = 0;
+		if(!checkType(event))return 0;
 		if (!event->State)
 		{
 			//Zero-timeout event state check optimization
@@ -182,6 +199,7 @@ namespace neosmart
 	int WaitForEvent(neosmart_event_t event, uint64_t milliseconds)
 	{
 		int tempResult;
+		if(!checkType(event))return 0;
 		if (milliseconds == 0)
 		{
 			tempResult = pthread_mutex_trylock(&event->Mutex);
@@ -351,6 +369,7 @@ namespace neosmart
 
 	int DestroyEvent(neosmart_event_t event)
 	{
+		if(!checkType(event))return 0;
 		int result = 0;
 
 #ifdef WFMO
@@ -374,6 +393,8 @@ namespace neosmart
 
 	int SetEvent(neosmart_event_t event)
 	{
+		if(!checkType(event))return 0;
+
 		int result = pthread_mutex_lock(&event->Mutex);
 		assert(result == 0);
 
@@ -506,8 +527,11 @@ namespace neosmart
 		return 0;
 	}
 
+
 	int ResetEvent(neosmart_event_t event)
 	{
+		if(!checkType(event))return 0;
+
 		int result = pthread_mutex_lock(&event->Mutex);
 		assert(result == 0);
 
